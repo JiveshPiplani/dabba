@@ -7,49 +7,51 @@
   <script type="module" src="https://unpkg.com/@google/model-viewer"></script>
 </head>
 <body>
-  <model-viewer id="animatedModel" src="rotatingCube.glb" ar ar-modes="quick-look scene-viewer" ios-src="Cube.reality" alt="A 3D model" auto-rotate camera-controls environment-image="neutral" shadow-intensity="1" autoplay loop animation-name="Run"></model-viewer>
+  <model-viewer id="animatedModel" src="rotatingCube.glb" ar ar-modes="quick-look scene-viewer" ios-src="Cube.reality" alt="A 3D model" auto-rotate camera-controls environment-image="neutral" shadow-intensity="1" autoplay loop animation-name="Run" animation-crossfade-duration="0"></model-viewer>
   <audio id="modelAudio" src="AUD-20240305-WA0002.mp3" loop></audio>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const modelViewer = document.querySelector('#animatedModel');
       const audioElement = document.querySelector('#modelAudio');
-      let animationDuration = 10; // Duration of your 3D model animation in seconds. Adjust this value accordingly.
-    
-      // Function to synchronize audio with the model's animation
-      function syncAudioWithAnimation() {
-        // Calculate the current time within the animation loop
-        let currentTimeInLoop = modelViewer.currentTime % animationDuration;
-        
-        // Set the audio's currentTime to match the animation's current frame
-        audioElement.currentTime = currentTimeInLoop;
-    
-        // Play the audio if it's not already playing
-        if (audioElement.paused) {
-          audioElement.play();
-        }
-      }
-    
+      let lastAnimationFraction = 0;
+
       modelViewer.addEventListener('ar-status', (event) => {
         if (event.detail.status === 'session-started') {
-          syncAudioWithAnimation(); // Sync and play audio when AR session starts
+          syncAudioWithModel();
         } else if (event.detail.status === 'session-ended') {
           audioElement.pause();
           audioElement.currentTime = 0; // Reset audio to start
         }
       });
-    
-      // Synchronize audio with the animation loop
-      modelViewer.addEventListener('load', () => {
-        animationDuration = modelViewer.getAnimationDuration(); // Attempt to dynamically get animation duration if supported
-        setInterval(syncAudioWithAnimation, 100); // Adjust sync interval as needed
-      });
-    
-      // Ensure audio loops correctly
+
+      modelViewer.addEventListener('load', () => syncAudioWithModel());
+
+      function syncAudioWithModel() {
+        // Assuming the animation and audio have the same duration
+        const animationDuration = modelViewer.duration; // This needs to be the actual duration of the animation
+        requestAnimationFrame(function checkAnimationTime() {
+          const animationFraction = modelViewer.currentTime / animationDuration;
+          // If animation loops (animationFraction resets to 0), reset audio to sync
+          if (animationFraction < lastAnimationFraction) {
+            audioElement.currentTime = 0;
+            audioElement.play();
+          } else {
+            // Sync audio position with animation frame
+            const audioTime = animationFraction * audioElement.duration;
+            audioElement.currentTime = audioTime;
+            if(audioElement.paused) audioElement.play();
+          }
+          lastAnimationFraction = animationFraction;
+          requestAnimationFrame(checkAnimationTime);
+        });
+      }
+
+      // Ensure audio loops if it ends before the user exits AR mode
       audioElement.addEventListener('ended', function() {
           this.currentTime = 0;
           this.play();
       }, false);
     });
-    </script>
+  </script>
 </body>
 </html>
