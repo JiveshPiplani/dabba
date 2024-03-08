@@ -16,25 +16,32 @@
       let animationStarted = false;
 
       modelViewer.addEventListener('load', () => {
-        const animationDuration = modelViewer.duration;
-        const audioDuration = audioElement.duration;
-
-        // Adjust audio playback rate to match animation duration if needed
-        const playbackRate = animationDuration / audioDuration;
-        audioElement.playbackRate = playbackRate;
+        // Ensure the audio playback rate is 1, as we will manually synchronize currentTime
+        audioElement.playbackRate = 1;
       });
 
       modelViewer.addEventListener('ar-status', (event) => {
         if (event.detail.status === 'object-placed' && !animationStarted) {
-          // Start the audio when the model is successfully tracked
           audioElement.play();
           animationStarted = true; // Prevent multiple play triggers
+          synchronizeAudio();
         } else if (event.detail.status === 'session-ended') {
           audioElement.pause();
           audioElement.currentTime = 0; // Reset audio to start
           animationStarted = false; // Reset flag for next AR session
         }
       });
+
+      function synchronizeAudio() {
+        requestAnimationFrame(function sync() {
+          if (animationStarted) {
+            // Synchronize audio currentTime with modelViewer currentTime
+            // Assuming the model and audio durations are the same or looped properly
+            audioElement.currentTime = modelViewer.currentTime % audioElement.duration;
+            requestAnimationFrame(sync);
+          }
+        });
+      }
     });
   </script>
 </body>
