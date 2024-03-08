@@ -25,13 +25,10 @@
       });
 
       modelViewer.addEventListener('ar-status', (event) => {
-        if (event.detail.status === 'session-started') {
-          modelViewer.addEventListener('model-visibility', (e) => {
-            if (e.detail.visible && !animationStarted) {
-              audioElement.play();
-              animationStarted = true; // Prevent multiple play triggers
-            }
-          });
+        if (event.detail.status === 'object-placed' && !animationStarted) {
+          // Start the audio when the model is successfully tracked
+          audioElement.play();
+          animationStarted = true; // Prevent multiple play triggers
         } else if (event.detail.status === 'session-ended') {
           audioElement.pause();
           audioElement.currentTime = 0; // Reset audio to start
