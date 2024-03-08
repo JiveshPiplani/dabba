@@ -5,18 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>3D Model with AR and Audio</title>
   <script type="module" src="https://unpkg.com/@google/model-viewer"></script>
+  <style>
+    .custom-ar-button {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .overlay-instructions {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0,0,0,0.5);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
+  <div class="overlay-instructions">Tap AR button to view in your space</div>
   <model-viewer id="animatedModel" src="rotatingCube.glb" ar ar-modes="quick-look scene-viewer" ios-src="Cube.reality" alt="A 3D model" auto-rotate camera-controls environment-image="neutral" shadow-intensity="1" autoplay loop animation-name="Run"></model-viewer>
+  <button class="custom-ar-button">View in AR</button>
   <audio id="modelAudio" src="AUD-20240305-WA0002.mp3" loop></audio>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const modelViewer = document.querySelector('#animatedModel');
       const audioElement = document.querySelector('#modelAudio');
+      const arButton = document.querySelector('.custom-ar-button');
+
       let animationStarted = false;
 
       modelViewer.addEventListener('load', () => {
-        // Ensure the audio playback rate is 1, as we will manually synchronize currentTime
         audioElement.playbackRate = 1;
       });
 
@@ -32,11 +61,13 @@
         }
       });
 
+      arButton.addEventListener('click', () => {
+        modelViewer.activateAR();
+      });
+
       function synchronizeAudio() {
         requestAnimationFrame(function sync() {
           if (animationStarted) {
-            // Synchronize audio currentTime with modelViewer currentTime
-            // Assuming the model and audio durations are the same or looped properly
             audioElement.currentTime = modelViewer.currentTime % audioElement.duration;
             requestAnimationFrame(sync);
           }
