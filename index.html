@@ -13,22 +13,43 @@
     document.addEventListener('DOMContentLoaded', function () {
       const modelViewer = document.querySelector('#animatedModel');
       const audioElement = document.querySelector('#modelAudio');
-
+      let animationDuration = 10; // Duration of your 3D model animation in seconds. Adjust this value accordingly.
+    
+      // Function to synchronize audio with the model's animation
+      function syncAudioWithAnimation() {
+        // Calculate the current time within the animation loop
+        let currentTimeInLoop = modelViewer.currentTime % animationDuration;
+        
+        // Set the audio's currentTime to match the animation's current frame
+        audioElement.currentTime = currentTimeInLoop;
+    
+        // Play the audio if it's not already playing
+        if (audioElement.paused) {
+          audioElement.play();
+        }
+      }
+    
       modelViewer.addEventListener('ar-status', (event) => {
         if (event.detail.status === 'session-started') {
-          audioElement.play();
+          syncAudioWithAnimation(); // Sync and play audio when AR session starts
         } else if (event.detail.status === 'session-ended') {
           audioElement.pause();
           audioElement.currentTime = 0; // Reset audio to start
         }
       });
-
-      // Ensure audio loops if it ends before the user exits AR mode
+    
+      // Synchronize audio with the animation loop
+      modelViewer.addEventListener('load', () => {
+        animationDuration = modelViewer.getAnimationDuration(); // Attempt to dynamically get animation duration if supported
+        setInterval(syncAudioWithAnimation, 100); // Adjust sync interval as needed
+      });
+    
+      // Ensure audio loops correctly
       audioElement.addEventListener('ended', function() {
           this.currentTime = 0;
           this.play();
       }, false);
     });
-  </script>
+    </script>
 </body>
 </html>
